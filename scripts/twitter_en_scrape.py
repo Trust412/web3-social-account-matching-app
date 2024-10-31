@@ -22,7 +22,11 @@ driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 arkham_url = "https://platform.arkhamintelligence.com/explorer/address/"
 debank_url = "https://debank.com/profile/"
 # Connect to an Ethereum node
-w3 = Web3(Web3.HTTPProvider('https://mainnet.infura.io/v3/PROJECT_ID'))
+w3 = Web3(Web3.HTTPProvider(f"https://mainnet.infura.io/v3/{PROJECT_ID}"))
+if w3.is_connected():
+    print("Connected to Ethereum node")
+else:
+    print("Failed to connect to Ethereum node")
 # Connect to MongoDB Atlas
 client = MongoClient(uri)
 #fetch wallet addresses from mongodb atlas
@@ -77,6 +81,7 @@ def scrape_arkham_intelligence(wallet_address):
             print(f"An error occurred while loading the page for {wallet_address}: {e}")
             print("Retrying...")
             driver.get(arkham_url + wallet_address)  # Retry loading the same page
+        sleep(random.uniform(0.5, 3))
 
 # Function to scrape debank for twitter
 def scrape_debank(wallet_address):
@@ -105,7 +110,8 @@ def scrape_debank(wallet_address):
         except Exception as e:
             print(f"An error occurred while loading the page for {wallet_address}: {e}")
             print("Retrying...")
-            sleep(random.uniform(0.5, 1.5))
+            driver.get(debank_url + wallet_address)  # Retry loading the same page
+            sleep(random.uniform(0.5, 3))
 
 # Function to find ens name for wallet address
 def find_ens_name(wallet_address):
