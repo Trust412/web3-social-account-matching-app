@@ -16,6 +16,7 @@ uri = os.getenv('MONGODB_URI')
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 url = "https://platform.arkhamintelligence.com/explorer/address/"
 
+#fetch wallet addresses from mongodb atlas
 def fetch_wallet_addresses(skip, limit):
     try:
         # Connect to MongoDB Atlas
@@ -38,6 +39,53 @@ def fetch_wallet_addresses(skip, limit):
         # Close the connection
         client.close()
 
+# Open a new CSV file to save results
+with open('results.csv', 'a', newline='', encoding='utf-8') as result_file:
+    csv_writer = csv.writer(result_file)
+    csv_writer.writerow(['No', 'Wallet Address', 'Twitter Address'])  # Write header
+
+# Function to scrape arkham intelligence
+def scrape_arkham_intelligence(wallet_address):
+    driver.get(url + wallet_address)
+
+    # Retry mechanism for loading the page
+    success = False
+    while not success:
+        print("Retrying to load the page...")
+        try:
+            # Use explicit wait to check for the presence of target divs
+            target_divs = WebDriverWait(driver, 10).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'div.Header_content__uLJ_E'))
+            )
+
+            # Process only the first target div
+            if target_divs:
+                target_div = target_divs[0]
+
+                # Get Twitter Address
+                twitter_address = None
+                a_tags = target_div.find_elements(By.TAG_NAME, 'a')
+                
+                for a_tag in a_tags:
+                    link = a_tag.get_attribute('href')
+                    if link and link.startswith('https://twitter.com/'):
+                        twitter_address = link
+                        break  # Exit after finding the first Twitter link
+                
+                # Save result if Twitter address is found
+                if twitter_address:
+                    No += 1
+                    print(f"Wallet Address: {wallet_address}, Twitter Address: {twitter_address}")
+                    csv_writer.writerow([No, wallet_address, twitter_address])  # Write to CSV
+                success = True  # Mark success and exit the loop
+
+        except Exception as e:
+            print(f"An error occurred while loading the page for {wallet_address}: {e}")
+            print("Retrying...")
+            driver.get(url + wallet_address)  # Retry loading the same page
+
+
+# Main function
 def main():
     limit = 5  # Number of documents per page
     page_number = 0  # Start at the first page
@@ -55,10 +103,10 @@ def main():
         for document in results:
             # Print the wallet address in a formatted way
             print(f"Wallet Address: {document['wallet_address']}") # Replace with your processing logic
-                    
+            scrape_arkham_intelligence(document['wallet_address'])        
         # Ask user if they want to continue after read 10000 addresses
         page_number += 1
-        if page_number%2000 == 0:
+        if page_number%20 == 0:
           user_input = input("Press 'y' to continue or 'q' to quit: ")
           if user_input.lower() == 'y':
               continue
