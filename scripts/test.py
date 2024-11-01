@@ -38,12 +38,7 @@ def fetch_wallet_addresses(skip, limit):
     finally:
         # Close the connection
         client.close()
-
-# Open a new CSV file to save results
-with open('results.csv', 'a', newline='', encoding='utf-8') as result_file:
-    csv_writer = csv.writer(result_file)
-    csv_writer.writerow(['No', 'Wallet Address', 'Twitter Address'])  # Write header
-
+    
 # Function to scrape arkham intelligence
 def scrape_arkham_intelligence(wallet_address):
     driver.get(url + wallet_address)
@@ -71,13 +66,10 @@ def scrape_arkham_intelligence(wallet_address):
                     if link and link.startswith('https://twitter.com/'):
                         twitter_address = link
                         break  # Exit after finding the first Twitter link
-                
-                # Save result if Twitter address is found
                 if twitter_address:
-                    No += 1
-                    print(f"Wallet Address: {wallet_address}, Twitter Address: {twitter_address}")
-                    csv_writer.writerow([No, wallet_address, twitter_address])  # Write to CSV
-                success = True  # Mark success and exit the loop
+                    return twitter_address
+                else:
+                    return None
 
         except Exception as e:
             print(f"An error occurred while loading the page for {wallet_address}: {e}")
