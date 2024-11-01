@@ -12,6 +12,9 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 uri = os.getenv('MONGODB_URI')
+# Initialize WebDriver
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+url = "https://platform.arkhamintelligence.com/explorer/address/"
 
 def fetch_wallet_addresses(skip, limit):
     try:
