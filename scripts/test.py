@@ -53,14 +53,14 @@ def main():
             # Print the wallet address in a formatted way
             print(f"Wallet Address: {document['wallet_address']}") # Replace with your processing logic
                     
-        # Ask user if they want to go to the next page
-        user_input = input("Press 'n' for next page or 'q' to quit: ")
-        
-        # move to next page mannualy
-        if user_input.lower() == 'n':
-            page_number += 1  # Move to the next page
-        elif user_input.lower() == 'q':
-            break  # Exit the loop
+        # Ask user if they want to continue after read 10000 addresses
+        page_number += 1
+        if page_number%2000 == 0:
+          user_input = input("Press 'y' to continue or 'q' to quit: ")
+          if user_input.lower() == 'y':
+              continue
+          if user_input.lower() == 'n':
+              break
 
 if __name__ == "__main__":
     main()
