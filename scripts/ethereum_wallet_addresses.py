@@ -10,9 +10,6 @@ from pymongo.server_api import ServerApi
 load_dotenv()
 uri = os.getenv('MONGODB_URI')
 
-# add description
-
-
 # Function to save results to MongoDB Atlas
 def save_results_to_mongodb(results, query_id):
     try:
