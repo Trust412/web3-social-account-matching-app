@@ -11,16 +11,20 @@ import csv
 import os
 import random
 from web3 import Web3
+from ens import ENS
 
 # Load environment variables
 load_dotenv()
 uri = os.getenv('MONGODB_URI')
-
+PROJECT_ID = os.getenv('PROJECT_ID')
 # Initialize WebDriver
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 arkham_url = "https://platform.arkhamintelligence.com/explorer/address/"
 debank_url = "https://debank.com/profile/"
-
+# Connect to an Ethereum node
+w3 = Web3(Web3.HTTPProvider('https://mainnet.infura.io/v3/PROJECT_ID'))
+#initialize the ENS instance
+ns = ENS.fromWeb3(w3)
 #fetch wallet addresses from mongodb atlas
 def fetch_wallet_addresses(skip, limit):
     try:
@@ -109,7 +113,17 @@ def scrape_debank(wallet_address):
             print("Retrying...")
             sleep(random.uniform(0.5, 1.5))
 
-# Function    
+# Function to find ens name for wallet address
+def find_ens_name(wallet_address):
+    try:
+        ens_name =ns.name(wallet_address)
+        if ens_name:
+            return ens_name
+        else:
+            return None
+    except Exception as e:
+        print(f"An error occurred while finding ens name for {wallet_address}: {e}")
+        return None
 # Main function
 def main():
     limit = 5  # Number of documents per page
