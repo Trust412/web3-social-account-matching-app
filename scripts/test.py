@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 import csv
 import os
 import random
+from web3 import Web3
 
 # Load environment variables
 load_dotenv()
@@ -50,7 +51,6 @@ def scrape_arkham_intelligence(wallet_address):
     # Retry mechanism for loading the page
     success = False
     while not success:
-        print("Retrying to load the page...")
         try:
             # Use explicit wait to check for the presence of target divs
             target_divs = WebDriverWait(driver, 10).until(
@@ -78,7 +78,7 @@ def scrape_arkham_intelligence(wallet_address):
         except Exception as e:
             print(f"An error occurred while loading the page for {wallet_address}: {e}")
             print("Retrying...")
-            driver.get(url + wallet_address)  # Retry loading the same page
+            driver.get(arkham_url + wallet_address)  # Retry loading the same page
 
 # Function to scrape debank for twitter
 def scrape_debank(wallet_address):
@@ -108,7 +108,8 @@ def scrape_debank(wallet_address):
             print(f"An error occurred while loading the page for {wallet_address}: {e}")
             print("Retrying...")
             sleep(random.uniform(0.5, 1.5))
-        
+
+# Function    
 # Main function
 def main():
     limit = 5  # Number of documents per page
