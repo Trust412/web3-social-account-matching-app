@@ -23,14 +23,11 @@ arkham_url = "https://platform.arkhamintelligence.com/explorer/address/"
 debank_url = "https://debank.com/profile/"
 # Connect to an Ethereum node
 w3 = Web3(Web3.HTTPProvider('https://mainnet.infura.io/v3/PROJECT_ID'))
-#initialize the ENS instance
-ns = ENS.fromWeb3(w3)
+# Connect to MongoDB Atlas
+client = MongoClient(uri)
 #fetch wallet addresses from mongodb atlas
 def fetch_wallet_addresses(skip, limit):
     try:
-        # Connect to MongoDB Atlas
-        client = MongoClient(uri)
-        
         # Select the database and collection
         db = client["web3_social_matching"]
         collection = db["ethereum_wallet_addresses"]
@@ -44,9 +41,6 @@ def fetch_wallet_addresses(skip, limit):
             
     except Exception as e:
         print(f"An error occurred: {e}")
-    finally:
-        # Close the connection
-        client.close()
     
 # Function to scrape arkham intelligence for twitter
 def scrape_arkham_intelligence(wallet_address):
@@ -116,7 +110,7 @@ def scrape_debank(wallet_address):
 # Function to find ens name for wallet address
 def find_ens_name(wallet_address):
     try:
-        ens_name =ns.name(wallet_address)
+        ens_name =w3.ens.name(wallet_address)
         if ens_name:
             return ens_name
         else:
@@ -124,6 +118,18 @@ def find_ens_name(wallet_address):
     except Exception as e:
         print(f"An error occurred while finding ens name for {wallet_address}: {e}")
         return None
+
+# Function to save results to mongoDB atlas
+def save_results_to_mongodb(result):
+    try:
+        db = client['web3_social_matching']
+        collection = db['web3_twitter_ens_collection']
+        # Insert the data
+        result = collection.insert_one(result)
+        print(f"Inserted {result.inserted_id} into MongoDB Atlas")
+    except Exception as e:
+        print(f"An error occurred while saving to MongoDB: {e}")
+
 # Main function
 def main():
     limit = 5  # Number of documents per page
@@ -145,9 +151,19 @@ def main():
             twitter_address = scrape_arkham_intelligence(document['wallet_address'])
             if twitter_address == None:
                 twitter_address = scrape_debank(document['wallet_address'])
-            with open('results.csv', 'a', newline='', encoding='utf-8') as file:
-                writer = csv.writer(file)
-                writer.writerow([document['wallet_address'], twitter_address])
+            ens_name = find_ens_name(document['wallet_address'])
+            if ens_name or twitter_address:
+                with open('results.csv', 'a', newline='', encoding='utf-8') as file:
+                    writer = csv.writer(file)
+                    writer.writerow([document['wallet_address'], twitter_address, ens_name])
+                result = {
+                    'wallet_address': document['wallet_address'],
+                    'twitter_address': twitter_address,
+                    'ens_name': ens_name
+                }
+                save_results_to_mongodb(result)
+            else:
+                print(f"No Twitter or ENS address found for {document['wallet_address']}")
             
         # Ask user if they want to continue after read 10000 addresses
         page_number += 1
@@ -157,6 +173,7 @@ def main():
               continue
           if user_input.lower() == 'n':
               break
+        
 
 if __name__ == "__main__":
     main()
